@@ -64,16 +64,33 @@ func (a *application) postBooks(w http.ResponseWriter, r *http.Request) {
 	//populate the var of "newBook", with the json unmarshalled value of body
 	err = json.Unmarshal(body, &newBook)
 	if err != nil {
-		http.Error(w, "Malformed json", http.StatusBadRequest)
+		http.Error(w, "malformed json", http.StatusBadRequest)
 		return
 	}
 	//this needs validation, not super happy with how ive tackled this
 	// but at least makes sure that the Author/ID/Title are present before adding
 	//to our slice of books
-	if newBook.Author == "" || newBook.ID == "" || newBook.Title == "" {
-		http.Error(w, "json didnt contain all of: Author, ID, Title", http.StatusBadRequest)
+
+	// if newBook.Author == "" || newBook.ID == "" || newBook.Title == "" {
+	// 	http.Error(w, "Malformed json", http.StatusBadRequest)
+	// 	return
+	// }
+
+	_, err = verifyBook(newBook)
+	if err != nil {
+		http.Error(w, "Malformed json", http.StatusBadRequest)
 		return
 	}
-	books = append(books, newBook)
 
+	entry := book{newBook.ID, newBook.Title, newBook.Author, newBook.Quantity}
+	books = append(books, entry)
+	w.WriteHeader(http.StatusAccepted)
+
+}
+
+func verifyBook(newBook book) (book, error) {
+	if newBook.Author == "" || newBook.ID == "" || newBook.Title == "" {
+		return newBook, fmt.Errorf("malformed Json")
+	}
+	return newBook, nil
 }
